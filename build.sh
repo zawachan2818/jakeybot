@@ -1,9 +1,13 @@
 #!/bin/bash
 
-# 不要パッケージを強制削除
-pip uninstall -y discord.py || true
-pip uninstall -y discord || true
-pip uninstall -y py-cord || true
+# キャッシュ削除（Renderに効く場合あり）
+rm -rf ~/.cache/pip
 
-# 必要パッケージのみ再インストール
+# 強制アンインストール
+pip uninstall -y discord.py discord py-cord || true
+
+# 明示的に py-cord を入れ直す
+pip install py-cord==2.5.0
+
+# 他のライブラリをインストール
 pip install -r requirements.txt
