@@ -13,6 +13,10 @@ import re
 import socket
 import yaml
 
+print("discord version:", discord.__version__)
+print("discord module path:", discord.__file__)
+
+
 # Go to project root directory
 chdir(Path(__file__).parent.resolve())
 
