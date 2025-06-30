@@ -1,7 +1,7 @@
 from aimodels.gemini import Completions
 from core.ai.assistants import Assistants
 from discord.ext import commands
-from google.genai import types
+from google.generativeai import types
 from os import environ
 import discord
 import logging
