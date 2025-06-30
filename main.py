@@ -1,4 +1,4 @@
-from discord.ext import commands
+from discord.ext import bridge, commands
 from google import genai
 from inspect import cleandoc
 from os import chdir, mkdir, environ
