@@ -16,11 +16,13 @@ import yaml
 print("discord version:", discord.__version__)
 print("discord module path:", discord.__file__)
 
-
+# ✅ Intents定義はここ1か所に集約
 intents = discord.Intents.default()
-intents.message_content = True  # これがないとメッセージ系のイベントを受け取れない
-bot = commands.Bot(command_prefix="!", intents=intents)
+intents.message_content = True
+intents.members = True
 
+# ✅ これは不要なので削除
+# bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Go to project root directory
 chdir(Path(__file__).parent.resolve())
@@ -36,11 +38,6 @@ logging.basicConfig(format='%(levelname)s %(asctime)s [%(filename)s:%(lineno)d -
 # Check if DISCORD_TOKEN is set
 if "DISCORD_TOKEN" in environ and (environ.get("DISCORD_TOKEN") == "INSERT_DISCORD_TOKEN" or environ.get("DISCORD_TOKEN") is None or environ.get("DISCORD_TOKEN") == ""):
     raise Exception("Please insert a valid Discord bot token")
-
-# Intents
-intents = discord.Intents.default()
-intents.message_content = True
-intents.members = True
 
 # Subclass this bot
 class InitBot(bridge.Bot):
