@@ -1,4 +1,7 @@
 #!/bin/bash
-pip uninstall -y discord discord.py py-cord || true
-pip install py-cord==2.5.0
+
+# 安全のため競合をアンインストール
+pip uninstall -y discord discord.py py-cord
+
+# 依存をインストール
 pip install -r requirements.txt
