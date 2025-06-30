@@ -9,6 +9,8 @@ pip install google-generativeai
 
 pip install aiofiles
 
+pip install python-dotenv
+
 # py-cordを先に入れる（依存なしで）
 pip install py-cord==2.5.0
 
