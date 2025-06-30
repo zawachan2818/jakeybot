@@ -5,6 +5,8 @@ echo "🔧 ビルド開始..."
 # 念のため不要な競合ライブラリを削除
 pip uninstall -y discord discord.py py-cord wavelink || true
 
+pip install google-generativeai
+
 # py-cordを先に入れる（依存なしで）
 pip install py-cord==2.5.0
 
