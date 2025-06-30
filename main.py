@@ -65,7 +65,8 @@ class InitBot(bridge.Bot):
             logging.warning("Playback support is disabled: %s", e)
             self._wavelink = None
 
-        self._gemini_api_client = genai.Client(api_key=environ.get("GEMINI_API_KEY"))
+        genai.configure(api_key=environ.get("GEMINI_API_KEY"))
+        self._gemini_api_client = genai.GenerativeModel("gemini-pro")
         self._aiohttp_main_client_session = aiohttp.ClientSession(loop=self.loop)
 
     def _lock_socket_instance(self, port):
