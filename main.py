@@ -1,5 +1,5 @@
 from discord.ext import bridge, commands
-from google import genai
+import google.generativeai as genai
 from inspect import cleandoc
 from os import chdir, mkdir, environ
 from pathlib import Path
