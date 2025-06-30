@@ -1,4 +1,4 @@
-from discord.ext import bridge, commands
+from discord.ext import commands
 from google import genai
 from inspect import cleandoc
 from os import chdir, mkdir, environ
@@ -15,6 +15,10 @@ import yaml
 
 print("discord version:", discord.__version__)
 print("discord module path:", discord.__file__)
+
+bot = commands.Bot(command_prefix="!")
+# 省略
+bot.run(TOKEN)
 
 
 # Go to project root directory
