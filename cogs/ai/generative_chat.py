@@ -105,8 +105,7 @@ class BaseChat():
         if _result["response"] == "OK" and _show_info:
             await prompt.channel.send(
                 embed=discord.Embed(
-                    suffix = "(this response isn't saved)" if not _append_history else ""
-					description = "Answered by **{}** by **{}** {}".format(_model_name, _model_provider, suffix)
+				f"{'this response isn’t saved' if not _append_history else ''}"
                 )
             )
 
