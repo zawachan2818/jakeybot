@@ -4,7 +4,7 @@ from aimodels.gemini import Completions
 from core.exceptions import CustomErrorMessage, PollOffTopicRefusal
 from discord.ext import commands
 from discord import Member, DiscordException
-from google.genai import types
+from google.generativeai import types
 from os import environ
 import discord
 import inspect
