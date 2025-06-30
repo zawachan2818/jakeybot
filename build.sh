@@ -1,11 +1,15 @@
 #!/bin/bash
 
-# 念のためのクリーンアップ
-pip uninstall -y discord discord.py py-cord
+echo "🔧 ビルド開始：環境の初期化中..."
 
-# 依存関係インストール
+# 古い仮想環境を削除（Render上では .venv に作られることが多い）
+rm -rf .venv
+
+echo "🧹 discord/discord.py をアンインストール中..."
+pip uninstall -y discord discord.py
+
+echo "📦 依存パッケージをインストール中..."
+pip install --upgrade pip
 pip install -r requirements.txt
 
-# 最後にもう一度 discord.py 系を削除して py-cord を明示的に入れる
-pip uninstall -y discord discord.py
-pip install py-cord==2.5.0
+echo "✅ ビルド完了！"
