@@ -20,7 +20,7 @@ print("discord module path:", discord.__file__)
 intents = discord.Intents.default()
 intents.message_content = True  # これがないとメッセージ系のイベントを受け取れない
 bot = commands.Bot(command_prefix="!", intents=intents)
-bot.run(TOKEN)
+bot.run(DISCORD_TOKEN)
 
 
 # Go to project root directory
