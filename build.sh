@@ -2,16 +2,13 @@
 
 echo "🔧 ビルド開始..."
 
-# 一応全部アンインストールしてから綺麗に入れ直し
+# 念のため不要な競合ライブラリを削除
 pip uninstall -y discord discord.py py-cord wavelink || true
 
-# py-cordのみ依存なしで入れる（wavelinkが勝手にdiscord.pyを入れないように）
-pip install py-cord==2.5.0 --no-deps
+# py-cordを先に入れる（依存なしで）
+pip install py-cord==2.5.0
 
-# 次にwavelinkだけ入れる（py-cord対応）
-pip install wavelink==3.4.1
-
-# その他すべてrequirements.txtから
+# 残りのライブラリをまとめて
 pip install -r requirements.txt
 
 echo "✅ ビルド完了！"
