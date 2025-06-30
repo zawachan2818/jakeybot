@@ -1,15 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-echo "🔧 ビルド開始：環境の初期化中..."
+echo "🔧 ビルド開始..."
 
-# 古い仮想環境を削除（Render上では .venv に作られることが多い）
-rm -rf .venv
+# 一応全部アンインストールしてから綺麗に入れ直し
+pip uninstall -y discord discord.py py-cord wavelink || true
 
-echo "🧹 discord/discord.py をアンインストール中..."
-pip uninstall -y discord discord.py
+# py-cordのみ依存なしで入れる（wavelinkが勝手にdiscord.pyを入れないように）
+pip install py-cord==2.5.0 --no-deps
 
-echo "📦 依存パッケージをインストール中..."
-pip install --upgrade pip
+# 次にwavelinkだけ入れる（py-cord対応）
+pip install wavelink==3.4.1
+
+# その他すべてrequirements.txtから
 pip install -r requirements.txt
 
 echo "✅ ビルド完了！"
