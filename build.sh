@@ -11,6 +11,8 @@ pip install aiofiles
 
 pip install python-dotenv
 
+pip install PyYAML
+
 # py-cordを先に入れる（依存なしで）
 pip install py-cord==2.5.0
 
