@@ -16,8 +16,10 @@ import yaml
 print("discord version:", discord.__version__)
 print("discord module path:", discord.__file__)
 
-bot = commands.Bot(command_prefix="!")
-# 省略
+
+intents = discord.Intents.default()
+intents.message_content = True  # これがないとメッセージ系のイベントを受け取れない
+bot = commands.Bot(command_prefix="!", intents=intents)
 bot.run(TOKEN)
 
 
