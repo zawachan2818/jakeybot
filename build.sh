@@ -7,6 +7,8 @@ pip uninstall -y discord discord.py py-cord wavelink || true
 
 pip install google-generativeai
 
+pip install aiofiles
+
 # py-cordを先に入れる（依存なしで）
 pip install py-cord==2.5.0
 
