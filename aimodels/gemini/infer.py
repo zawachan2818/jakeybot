@@ -77,7 +77,10 @@ class Completions(ModelParams):
         # Upload the file
         _msgstatus = None
         try:
-            _filedata = await self._gemini_api_client.aio.files.upload(file=_xfilename, config=types.UploadFileConfig(mime_type=_mimetype))
+            _filedata = await self._gemini_api_client.aio.files.upload(
+    				file=_xfilename,
+    				mime_type=_mimetype  # 👈 これだけでOK！
+			)
 
             while _filedata.state == "PROCESSING":
                 if _msgstatus is None:
