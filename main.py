@@ -169,3 +169,17 @@ bot.help_command = CustomHelp()
 
 # ✅ 環境変数 DISCORD_TOKEN を使うように変更済み！
 bot.run(environ.get('DISCORD_TOKEN'))
+
+# Add this at the bottom of main.py
+import threading
+import socket
+
+def dummy_server():
+    s = socket.socket()
+    s.bind(('0.0.0.0', 10000))  # Dummy port
+    s.listen(1)
+    while True:
+        conn, addr = s.accept()
+        conn.close()
+
+threading.Thread(target=dummy_server, daemon=True).start()
