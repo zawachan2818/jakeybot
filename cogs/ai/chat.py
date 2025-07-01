@@ -48,8 +48,8 @@ class Chat(commands.Cog):
     model = SlashCommandGroup(name="model", description="Configure default models for the conversation")
 
     @model.command(
-        contexts={discord.InteractionContextType.guild, discord.InteractionContextType.bot_dm},
-        integration_types={discord.IntegrationType.guild_install, discord.IntegrationType.user_install},
+        contexts={None},
+        integration_types={None},
     )
     @discord.option(
         "model",
@@ -104,8 +104,8 @@ class Chat(commands.Cog):
         logging.error("An error has occurred while executing models command, reason: ", exc_info=True)
 
     @model.command(
-        contexts={discord.InteractionContextType.guild, discord.InteractionContextType.bot_dm},
-        integration_types={discord.IntegrationType.guild_install, discord.IntegrationType.user_install},
+        contexts={None},
+        integration_types={None},
     )
     async def list(self, ctx):
         """List all available models"""
@@ -144,8 +144,8 @@ class Chat(commands.Cog):
         logging.error("An error has occurred while executing models command, reason: ", exc_info=True)
 
     @commands.slash_command(
-        contexts={discord.InteractionContextType.guild, discord.InteractionContextType.bot_dm},
-        integration_types={discord.IntegrationType.guild_install, discord.IntegrationType.user_install},
+        contexts={None},
+        integration_types={None},
     )
     @discord.option(
         "model",
@@ -186,8 +186,8 @@ class Chat(commands.Cog):
         logging.error("An error has occurred while setting openrouter models, reason: ", exc_info=True)
 
     @commands.slash_command(
-        contexts={discord.InteractionContextType.guild, discord.InteractionContextType.bot_dm},
-        integration_types={discord.IntegrationType.guild_install, discord.IntegrationType.user_install},
+        contexts={None},
+        integration_types={None},
     )
     @discord.option(
         "reset_prefs",
@@ -243,8 +243,8 @@ class Chat(commands.Cog):
             logging.error("An error has occurred while executing sweep command, reason: ", exc_info=True)
 
     @commands.slash_command(
-        contexts={discord.InteractionContextType.guild, discord.InteractionContextType.bot_dm},
-        integration_types={discord.IntegrationType.guild_install, discord.IntegrationType.user_install},
+        contexts={None},
+        integration_types={None},
     )
     @discord.option(
         "capability",
