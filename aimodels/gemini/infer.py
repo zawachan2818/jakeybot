@@ -2,7 +2,7 @@ from .config import ModelParams
 from core.ai.core import Utils
 from core.exceptions import CustomErrorMessage
 import google.generativeai as genai
-from google.generativeai import GenerativeModel, GenerationConfig, Content, Part
+from google.generativeai import Content, Part, GenerationConfig
 from google.generativeai import GenerationModelError  # または必要な例外クラス
 from os import environ
 from pathlib import Path
@@ -49,8 +49,6 @@ class Completions(ModelParams):
         self._gemini_api_client: genai.Client = discord_bot._gemini_api_client
         self._aiohttp_main_client_session: aiohttp.ClientSession = discord_bot._aiohttp_main_client_session
 
-        #self._file_data = None
-
         self._model_name = model_name
         self._guild_id = guild_id
 
@@ -62,24 +60,20 @@ class Completions(ModelParams):
         _mimetype = attachment.content_type.split(";")[0]
         try:
             async with self._aiohttp_main_client_session.get(attachment.url, allow_redirects=True) as _xattachments:
-                # write to file with random number ID
                 async with aiofiles.open(_xfilename, "wb") as filepath:
                     async for _chunk in _xattachments.content.iter_chunked(8192):
                         await filepath.write(_chunk)
         except aiohttp.ClientError as httperror:
-            # Remove the file if it exists ensuring no data persists even on failure
             if Path(_xfilename).exists():
                 await aiofiles.os.remove(_xfilename)
-            # Raise exception
             raise httperror
 
-        # Upload the file
         _msgstatus = None
         try:
             _filedata = await self._gemini_api_client.aio.files.upload(
-    				file=_xfilename,
-    				mime_type=_mimetype
-			)
+                file=_xfilename,
+                mime_type=_mimetype
+            )
 
             while _filedata.state == "PROCESSING":
                 if _msgstatus is None:
@@ -90,13 +84,14 @@ class Completions(ModelParams):
         except Exception as e:
             raise e
         finally:
-            if _msgstatus: await _msgstatus.delete()
+            if _msgstatus:
+                await _msgstatus.delete()
             await aiofiles.os.remove(_xfilename)
 
-        self._file_data = types.Content(
+        self._file_data = genai.Content(
             parts=[
-                types.Part.from_uri(
-                    file_uri=_filedata.uri, 
+                genai.Part.from_uri(
+                    file_uri=_filedata.uri,
                     mime_type=_filedata.mime_type
                 )
             ],
@@ -107,12 +102,12 @@ class Completions(ModelParams):
     # Inferencing
     ############################
     # Completion
-    async def completion(self, prompt: typing.Union[str, list, types.Content], tool: dict = None, system_instruction: str = None, return_text: bool = True):
+    async def completion(self, prompt: typing.Union[str, list, Content], tool: dict = None, system_instruction: str = None, return_text: bool = True):
         # Create response
         _response = await self._gemini_api_client.aio.models.generate_content(
             model=self._model_name,
             contents=prompt,
-            config=types.GenerateContentConfig(
+            config=genai.GenerateContentConfig(
                 **self._genai_params,
                 system_instruction=system_instruction or None,
                 tools=tool
@@ -141,7 +136,7 @@ class Completions(ModelParams):
 
         # Parse prompts
         _chat_thread.append(
-            types.Content(
+            genai.Content(
                 parts=[types.Part.from_text(text=prompt)],
                 role="user"
             ).model_dump(exclude_unset=True)
@@ -235,7 +230,7 @@ class Completions(ModelParams):
                         "tool_args": _part.function_call.args
                     }
 
-                _toolParts.append(types.Part.from_function_response(
+                _toolParts.append(genai.Part.from_function_response(
                         name=_part.function_call.name,
                         response=_toolResult
                     )
