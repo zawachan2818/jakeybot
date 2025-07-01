@@ -19,7 +19,7 @@ pip install motor
 
 pip install PyNaCl
 
-pip install wavelin
+pip install wavelink
 
 # py-cordを先に入れる（依存なしで）
 pip install py-cord==2.5.0
