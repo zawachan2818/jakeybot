@@ -1,5 +1,5 @@
 from core.exceptions import CustomErrorMessage
-from google.genai import types
+from google.generativeai import types
 import importlib
 import logging
 
