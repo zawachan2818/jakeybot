@@ -1,5 +1,5 @@
 # py-cord本体（依存を自動で入れさせない）
-py-cord==2.5.0 --no-deps
+py-cord==2.5.0
 
 # wavelink も py-cord対応の最新版
 wavelink==3.4.1
