@@ -2,8 +2,7 @@ from .config import ModelParams
 from core.ai.core import Utils
 from core.exceptions import CustomErrorMessage
 import google.generativeai as genai
-from google.generativeai.types import Part, Content, GenerateContentConfig
-from google.generativeai.types import UploadFileConfig
+from google.generativeai import GenerativeModel, GenerationConfig, Content, Part
 from google.generativeai import GenerationModelError  # または必要な例外クラス
 from os import environ
 from pathlib import Path
@@ -79,7 +78,7 @@ class Completions(ModelParams):
         try:
             _filedata = await self._gemini_api_client.aio.files.upload(
     				file=_xfilename,
-    				mime_type=_mimetype  # 👈 これだけでOK！
+    				mime_type=_mimetype
 			)
 
             while _filedata.state == "PROCESSING":
