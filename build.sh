@@ -13,6 +13,8 @@ pip install python-dotenv
 
 pip install PyYAML
 
+pip install pymongo
+
 # py-cordを先に入れる（依存なしで）
 pip install py-cord==2.5.0
 
