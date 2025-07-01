@@ -1,9 +1,9 @@
 from .config import ModelParams
 from core.ai.core import Utils
 from core.exceptions import CustomErrorMessage
-from google import genai
-from google.genai import errors
-from google.genai import types
+import google.generativeai as genai
+from google.generativeai.types import UploadFileConfig, Part, Content, GenerateContentConfig
+from google.generativeai import GenerationModelError  # または必要な例外クラス
 from os import environ
 from pathlib import Path
 import aiohttp
