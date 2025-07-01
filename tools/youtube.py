@@ -1,7 +1,6 @@
-from google.genai import types
 from os import environ
 import aiohttp
-import google.genai as genai
+from google.generativeai import types
 import json
 
 class Tool:
