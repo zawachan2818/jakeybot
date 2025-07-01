@@ -12,55 +12,52 @@ import logging
 import re
 import socket
 import yaml
+import threading
 
+# discord version info
 print("discord version:", discord.__version__)
 print("discord module path:", discord.__file__)
 
-# ✅ Intents定義はここ1か所に集約
+# Intents
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-# ✅ これは不要なので削除
-# bot = commands.Bot(command_prefix="!", intents=intents)
-
-# Go to project root directory
+# Change working directory to script's location
 chdir(Path(__file__).parent.resolve())
 
 # Load environment variables
 dotenv.load_dotenv()
 
-# Logging
-logging.basicConfig(format='%(levelname)s %(asctime)s [%(filename)s:%(lineno)d - %(funcName)s()]: %(message)s', 
-                    datefmt='%m/%d/%Y %I:%M:%S %p', 
-                    level=logging.INFO)
+# Setup logging
+logging.basicConfig(
+    format='%(levelname)s %(asctime)s [%(filename)s:%(lineno)d - %(funcName)s()]: %(message)s',
+    datefmt='%m/%d/%Y %I:%M:%S %p',
+    level=logging.INFO
+)
 
-# Check if DISCORD_TOKEN is set
-if "DISCORD_TOKEN" in environ and (environ.get("DISCORD_TOKEN") == "INSERT_DISCORD_TOKEN" or environ.get("DISCORD_TOKEN") is None or environ.get("DISCORD_TOKEN") == ""):
+# Check for valid token
+if "DISCORD_TOKEN" not in environ or not environ.get("DISCORD_TOKEN") or environ.get("DISCORD_TOKEN") == "INSERT_DISCORD_TOKEN":
     raise Exception("Please insert a valid Discord bot token")
 
-# Subclass this bot
+# Bot class
 class InitBot(bridge.Bot):
     def __init__(self, *args, **kwargs):
         self._lock_socket_instance(45769)
         super().__init__(*args, **kwargs)
 
-        if environ.get("TEMP_DIR") is not None:
-            if Path(environ.get("TEMP_DIR")).exists():
-                for file in Path(environ.get("TEMP_DIR", "temp")).iterdir():
-                    file.unlink()
-            else:
-                mkdir(environ.get("TEMP_DIR"))
-        else:
-            environ["TEMP_DIR"] = "temp"
-            mkdir(environ.get("TEMP_DIR"))
+        temp_dir = environ.get("TEMP_DIR", "temp")
+        environ["TEMP_DIR"] = temp_dir
+        temp_path = Path(temp_dir)
+        temp_path.mkdir(exist_ok=True)
+        for file in temp_path.iterdir():
+            file.unlink()
 
         self._wavelink = None
         try:
             self._wavelink = importlib.import_module("wavelink")
         except ModuleNotFoundError as e:
             logging.warning("Playback support is disabled: %s", e)
-            self._wavelink = None
 
         genai.configure(api_key=environ.get("GEMINI_API_KEY"))
         self._gemini_api_client = genai.GenerativeModel("gemini-pro")
@@ -77,8 +74,9 @@ class InitBot(bridge.Bot):
 
     async def close(self):
         await self._aiohttp_main_client_session.close()
-        if Path(environ.get("TEMP_DIR", "temp")).exists():
-            for file in Path(environ.get("TEMP_DIR", "temp")).iterdir():
+        temp_path = Path(environ.get("TEMP_DIR", "temp"))
+        if temp_path.exists():
+            for file in temp_path.iterdir():
                 await aiofiles.os.remove(file)
         self._socket.close()
         await super().close()
@@ -87,25 +85,18 @@ bot = InitBot(command_prefix=environ.get("BOT_PREFIX", "$"), intents=intents)
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(f"Preparing the bot for it's first use..."))
-    if bot._wavelink is not None:
-        await bot.change_presence(activity=discord.Game(f"Connecting to wavelink server..."))
-        try:
-            ENV_LAVALINK_URI = environ.get("ENV_LAVALINK_URI") or "http://127.0.0.1:2222"
-            ENV_LAVALINK_PASS = environ.get("ENV_LAVALINK_PASS") or "youshallnotpass"
-            ENV_LAVALINK_IDENTIFIER = environ.get("ENV_LAVALINK_IDENTIFIER") or "main"
+    await bot.change_presence(activity=discord.Game("Preparing the bot for its first use..."))
 
+    if bot._wavelink is not None:
+        await bot.change_presence(activity=discord.Game("Connecting to wavelink server..."))
+        try:
             node = bot._wavelink.Node(
-                identifier=ENV_LAVALINK_IDENTIFIER,
-                uri=ENV_LAVALINK_URI,
-                password=ENV_LAVALINK_PASS,
+                identifier=environ.get("ENV_LAVALINK_IDENTIFIER", "main"),
+                uri=environ.get("ENV_LAVALINK_URI", "http://127.0.0.1:2222"),
+                password=environ.get("ENV_LAVALINK_PASS", "youshallnotpass"),
                 retries=0
             )
-
-            await bot._wavelink.Pool.connect(
-                client=bot,
-                nodes=[node]
-            )
+            await bot._wavelink.Pool.connect(client=bot, nodes=[node])
         except Exception as e:
             logging.error("Failed to setup wavelink: %s... Disabling playback support", e)
             bot._wavelink = None
@@ -117,31 +108,36 @@ async def on_ready():
 async def on_message(message: discord.Message):
     await bot.process_commands(message)
     if message.author == bot.user:
-       return
+        return
 
     if bot.user.mentioned_in(message) and not message.attachments and not re.sub(f"<@{bot.user.id}>", '', message.content).strip():
-        await message.channel.send(
-            cleandoc(f"""Hello <@{message.author.id}>! I am **{bot.user.name}** ✨
-                    ...
-                    You can ask me questions, such as:
-                    - **@{bot.user.name}** How many R's in the word strawberry?  
-                    - **/ask** `prompt:`Can you tell me a joke?  
-                    - Hey **@{bot.user.name}** can you give me quotes for today?  
+        await message.channel.send(cleandoc(f"""
+            Hello <@{message.author.id}>! I am **{bot.user.name}** ✨
 
-                    If you have any questions, you can visit my [documentation or contact me here](https://zavocc.github.io)"""))
+            You can ask me questions, such as:
+            - **@{bot.user.name}** How many R's in the word strawberry?
+            - **/ask** `prompt:` Can you tell me a joke?
+            - Hey **@{bot.user.name}**, can you give me quotes for today?
 
-with open('commands.yaml', 'r') as file:
-    cog_commands = yaml.safe_load(file)
-    for command in cog_commands:
-        if "voice" in command and not bot._wavelink:
-           logging.warning("Skipping %s... Playback support is disabled", command)
-           continue
-        try:
-            bot.load_extension(f'cogs.{command}')
-        except Exception as e:
-            logging.error("cogs.%s failed to load, skipping... The following error of the cog: %s", command, e)
-            continue
+            If you have any questions, you can visit my [documentation or contact me here](https://zavocc.github.io)
+        """))
 
+# Load cogs from commands.yaml
+try:
+    with open('commands.yaml', 'r') as file:
+        cog_commands = yaml.safe_load(file)
+        for command in cog_commands:
+            if "voice" in command and not bot._wavelink:
+                logging.warning("Skipping %s... Playback support is disabled", command)
+                continue
+            try:
+                bot.load_extension(f'cogs.{command}')
+            except Exception as e:
+                logging.error("cogs.%s failed to load, skipping... The following error of the cog: %s", command, e)
+except Exception as e:
+    logging.error("Failed to load commands.yaml: %s", e)
+
+# Custom HelpCommand
 class CustomHelp(commands.MinimalHelpCommand):
     def __init__(self):
         super().__init__()
@@ -149,15 +145,11 @@ class CustomHelp(commands.MinimalHelpCommand):
 
     def get_opening_note(self):
         command_name = self.invoked_with
-        return (
-            cleandoc(f"""**{bot.user.name}** help
+        return cleandoc(f"""**{bot.user.name}** help
 
-            Welcome! here are the prefix commands that you can use!
-            
-            Use `{self.context.clean_prefix}{command_name} [command]` for more info on a command.
-
-            You can also use `{self.context.clean_prefix}{command_name} [category]` for more info on a category.""")
-        )
+        Welcome! here are the prefix commands that you can use!
+        Use `{self.context.clean_prefix}{command_name} [command]` for more info on a command.
+        You can also use `{self.context.clean_prefix}{command_name} [category]` for more info on a category.""")
 
     async def send_pages(self):
         destination = self.get_destination()
@@ -167,16 +159,13 @@ class CustomHelp(commands.MinimalHelpCommand):
 
 bot.help_command = CustomHelp()
 
-# ✅ 環境変数 DISCORD_TOKEN を使うように変更済み！
+# Run bot
 bot.run(environ.get('DISCORD_TOKEN'))
 
-# Add this at the bottom of main.py
-import threading
-import socket
-
+# Dummy port listener (for Render)
 def dummy_server():
     s = socket.socket()
-    s.bind(('0.0.0.0', 10000))  # Dummy port
+    s.bind(('0.0.0.0', 10000))
     s.listen(1)
     while True:
         conn, addr = s.accept()
