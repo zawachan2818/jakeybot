@@ -136,10 +136,10 @@ class Completions(ModelParams):
 
         # Parse prompts
         _chat_thread.append(
-            genai.Content(
-                parts=[types.Part.from_text(text=prompt)],
-                role="user"
-            ).model_dump(exclude_unset=True)
+            Content(
+    				parts=[Part.from_text(text=prompt)],
+    				role="user"
+			).model_dump(exclude_unset=True)
         )
     
         try:
@@ -263,7 +263,7 @@ class Completions(ModelParams):
                 await _interstitial.edit(f"✅ Used: **{_Tool['tool_human_name']}**")
 
             # Append the tool parts to the chat thread
-            _chat_thread.append(types.Content(parts=_toolParts).model_dump(exclude_unset=True))
+            _chat_thread.append(Content(parts=_toolParts).model_dump(exclude_unset=True))
 
             # Add function call parts to the response
             _response = await self.completion(prompt=_chat_thread, system_instruction=system_instruction, return_text=False)
