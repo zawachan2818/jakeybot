@@ -5,14 +5,14 @@ import discord
 import logging
 
 class Misc(commands.Cog):
-    """Use my other utilities here that can help make your server more active and entertaining"""
     def __init__(self, bot):
         self.bot = bot
         self.author = environ.get("BOT_NAME", "Jakey Bot")
 
     @commands.slash_command(
-        contexts={discord.InteractionContextType.guild},
-        integration_types={discord.IntegrationType.guild_install}
+        # ↓ InteractionContextType を削除！
+        # contexts={discord.InteractionContextType.guild},
+        # integration_types={discord.IntegrationType.guild_install}
     )
     async def mimic(self, ctx, user: Member, message_body: str):
         """Mimic as user!"""
@@ -22,7 +22,6 @@ class Misc(commands.Cog):
             user = await self.bot.fetch_user(user)    
         avatar_url = user.avatar.url if user.avatar else "https://cdn.discordapp.com/embed/avatars/0.png"
 
-        # Set display name depending on whether if the user joins in particular guild or in DMs to have different display names
         if ctx.guild:
             _xuser_display_name = await ctx.guild.fetch_member(user.id)
             user_name = f"{_xuser_display_name.display_name}"
