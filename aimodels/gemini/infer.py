@@ -2,7 +2,7 @@ from .config import ModelParams
 from core.ai.core import Utils
 from core.exceptions import CustomErrorMessage
 import google.generativeai as genai
-from google.generativeai.types import UploadFileConfig, Part, Content, GenerateContentConfig
+from google.generativeai import UploadFileConfig, Part, Content, GenerateContentConfig
 from google.generativeai import GenerationModelError  # または必要な例外クラス
 from os import environ
 from pathlib import Path
