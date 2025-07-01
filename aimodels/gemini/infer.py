@@ -279,3 +279,139 @@ class Completions(ModelParams):
 
     async def save_to_history(self, db_conn, chat_thread = None):
         await db_conn.save_history(guild_id=self._guild_id, chat_thread=chat_thread, model_provider=self._model_provider_thread)
+from .config import ModelParams
+from core.ai.core import Utils
+from core.exceptions import CustomErrorMessage
+import google.generativeai as genai
+from google.generativeai.types import Content, Part, GenerateContentConfig
+from google.api_core import exceptions as errors
+
+from os import environ
+from pathlib import Path
+import aiohttp
+import aiofiles
+import asyncio
+import discord
+import io
+import logging
+import typing
+import random
+
+class Completions(ModelParams):
+    def __init__(self, discord_ctx, discord_bot, guild_id=None, model_name="gemini-1.5-flash"):
+        super().__init__()
+        self._discord_ctx = discord_ctx
+
+        if isinstance(discord_ctx, discord.Message):
+            self._discord_method_send = self._discord_ctx.channel.send
+        elif isinstance(discord_ctx, discord.ApplicationContext):
+            self._discord_method_send = self._discord_ctx.send
+        else:
+            raise Exception("Invalid discord context")
+
+        if not isinstance(discord_bot, discord.Bot):
+            raise Exception("Invalid discord bot object provided")
+
+        if not hasattr(discord_bot, "_gemini_api_client"):
+            raise Exception("Missing Gemini client")
+
+        if not hasattr(discord_bot, "_aiohttp_main_client_session"):
+            raise Exception("Missing aiohttp client")
+
+        self._discord_bot: discord.Bot = discord_bot
+        self._gemini_api_client: genai.Client = discord_bot._gemini_api_client
+        self._aiohttp_main_client_session: aiohttp.ClientSession = discord_bot._aiohttp_main_client_session
+        self._model_name = model_name
+        self._guild_id = guild_id
+
+    async def input_files(self, attachment: discord.Attachment):
+        filename = f"{environ.get('TEMP_DIR')}/JAKEY.{random.randint(1000,9999999)}.{attachment.filename}"
+        mime_type = attachment.content_type.split(";")[0]
+
+        try:
+            async with self._aiohttp_main_client_session.get(attachment.url) as response:
+                async with aiofiles.open(filename, "wb") as f:
+                    async for chunk in response.content.iter_chunked(8192):
+                        await f.write(chunk)
+        except Exception:
+            if Path(filename).exists():
+                await aiofiles.os.remove(filename)
+            raise
+
+        msg = None
+        try:
+            file_data = await self._gemini_api_client.aio.files.upload(file=filename, mime_type=mime_type)
+            while file_data.state == "PROCESSING":
+                if msg is None:
+                    msg = await self._discord_method_send("⌚ ファイルを処理中です...")
+                file_data = await self._gemini_api_client.aio.files.get(name=file_data.name)
+                await asyncio.sleep(2.5)
+        finally:
+            if msg:
+                await msg.delete()
+            await aiofiles.os.remove(filename)
+
+        self._file_data = Content(
+            parts=[Part.from_uri(file_uri=file_data.uri, mime_type=file_data.mime_type)],
+            role="user"
+        ).model_dump(exclude_unset=True)
+
+    async def completion(self, prompt: typing.Union[str, list, Content], tool: dict = None, system_instruction: str = None, return_text: bool = True):
+        config = GenerateContentConfig(
+            **self._genai_params,
+            tools=tool,
+            system_instruction=system_instruction or None
+        )
+
+        response = await self._gemini_api_client.aio.models.generate_content(
+            model=self._model_name,
+            contents=prompt,
+            config=config
+        )
+
+        return response.text if return_text else response
+
+    async def chat_completion(self, prompt, db_conn, system_instruction: str = None):
+        history = await db_conn.load_history(guild_id=self._guild_id, model_provider=self._model_provider_thread) or []
+
+        tool = await self._fetch_tool(db_conn)
+
+        if hasattr(self, "_file_data"):
+            history.append(self._file_data)
+
+        history.append(
+            Content(parts=[Part(text=prompt)], role="user").model_dump(exclude_unset=True)
+        )
+
+        try:
+            response = await self.completion(prompt=history, tool=tool["tool_schema"], system_instruction=system_instruction, return_text=False)
+        except errors.ClientError as e:
+            if "do not have permission" in str(e):
+                for turn in history:
+                    for part in turn["parts"]:
+                        if part.get("file_data"):
+                            part["file_data"] = None
+                            part["text"] = "⚠️ 添付ファイルの期限が切れました"
+                await self._discord_method_send("⚠️ 添付ファイルが無効化されたため履歴を初期化しました")
+                response = await self.completion(prompt=history, tool=tool["tool_schema"], system_instruction=system_instruction, return_text=False)
+            else:
+                raise
+
+        candidate = response.candidates[0]
+
+        if candidate.finish_reason == "SAFETY":
+            raise CustomErrorMessage("🚫 不適切な内容が検出されました")
+        elif candidate.finish_reason == "MAX_TOKENS":
+            raise CustomErrorMessage("⚠️ レスポンスが長すぎます")
+        elif candidate.finish_reason != "STOP":
+            raise CustomErrorMessage("⚠️ 回答中にエラーが発生しました")
+
+        for part in candidate.content.parts:
+            if part.text:
+                await Utils.send_ai_response(self._discord_ctx, prompt, part.text, self._discord_method_send)
+
+        history.append(candidate.content.model_dump(exclude_unset=True))
+        return {"response": "OK", "chat_thread": history}
+
+    async def save_to_history(self, db_conn, chat_thread=None):
+        await db_conn.save_history(guild_id=self._guild_id, chat_thread=chat_thread, model_provider=self._model_provider_thread)
