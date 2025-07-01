@@ -1,5 +1,5 @@
 from core.exceptions import CustomErrorMessage
-from google.generativeai import types
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import importlib
 import logging
 
