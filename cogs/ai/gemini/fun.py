@@ -4,7 +4,7 @@ from aimodels.gemini import Completions
 from core.exceptions import CustomErrorMessage, PollOffTopicRefusal
 from discord.ext import commands
 from discord import Member, DiscordException
-from google.generativeai import types
+from google.generativeai.types import Content, Part
 from os import environ
 import discord
 import inspect
@@ -22,9 +22,10 @@ class GeminiUtils(commands.Cog):
     # Avatar tools
     ###############################################
     avatar = discord.commands.SlashCommandGroup(
-        name="avatar", description="Avatar tools",
-        contexts={discord.InteractionContextType.guild, discord.InteractionContextType.bot_dm},
-        integration_types={discord.IntegrationType.guild_install, discord.IntegrationType.user_install}
+        name="avatar", description="Avatar tools"
+        # 以下は削除：contexts / integration_types は使用不可
+        # contexts={discord.InteractionContextType.guild, discord.InteractionContextType.bot_dm},
+        # integration_types={discord.IntegrationType.guild_install, discord.IntegrationType.user_install}
     )
         
     @avatar.command()
