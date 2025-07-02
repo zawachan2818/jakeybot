@@ -2,7 +2,7 @@ from aimodels.gemini import Completions
 from core.ai.assistants import Assistants
 from discord.ext import commands
 from google.generativeai import Content, Part, GenerationConfig
-from google.generativeai import HarmCategory, HarmBlockThreshold
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from os import environ
 import discord
 import logging
