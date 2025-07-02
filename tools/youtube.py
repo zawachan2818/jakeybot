@@ -1,6 +1,6 @@
 from os import environ
 import aiohttp
-from google.generativeai import HarmCategory, HarmBlockThreshold
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
 import json
 
 class Tool:
