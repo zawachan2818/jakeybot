@@ -25,4 +25,4 @@ pymongo
 PyYAML
 PyNaCl
 # ✅ py-cord対応wavelink（フォーク版）
-git+https://github.com/PythonistaGuild/Wavelink@master
+git+https://github.com/PythonistaGuild/Wavelink@main
