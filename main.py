@@ -13,6 +13,7 @@ import re
 import socket
 import yaml
 import threading
+import motor.motor_asyncio
 
 # discord version info
 print("discord version:", discord.__version__)
@@ -85,6 +86,21 @@ bot = InitBot(command_prefix=environ.get("BOT_PREFIX", "$"), intents=intents)
 
 @bot.event
 async def on_ready():
+    mongo_uri = environ.get("MONGO_DB_URL")
+    bot._db_conn = motor.motor_asyncio.AsyncIOMotorClient(mongo_uri)
+
+    # MongoDB 接続確認
+    try:
+        await bot._db_conn.server_info()
+        logging.info("✅ MongoDB connected successfully")
+    except Exception as e:
+        logging.error("❌ MongoDB connection failed: %s", e)
+
+    # 必要なら History の初期化（あとで使う場合）
+    from core.ai.history import History
+    bot._history = History(bot=bot, db_conn=bot._db_conn)
+
+    # この下に元々あった処理を続けて書く（wavelink処理など）
     await bot.change_presence(activity=discord.Game("Preparing the bot for its first use..."))
 
     if bot._wavelink is not None:
