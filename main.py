@@ -1,4 +1,4 @@
-from discord.ext import bridge, commands
+from discord.ext import commands
 from google import genai
 from inspect import cleandoc
 from os import chdir, mkdir, environ
@@ -43,7 +43,7 @@ if "DISCORD_TOKEN" not in environ or not environ.get("DISCORD_TOKEN") or environ
 
 
 # Bot class
-class InitBot(bridge.Bot):
+class InitBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         self._lock_socket_instance(45769)
         super().__init__(*args, **kwargs)
