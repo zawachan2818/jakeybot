@@ -14,7 +14,7 @@ class Voice(commands.Cog):
         self.enqueued_tracks = {}
         self.pendings = {}
 
-    	voice = SlashCommandGroup("voice", "Access voice features!")  # ← 修正済み
+	voice = SlashCommandGroup("voice", "Access voice features!")  # ← 修正済み
         
     @voice.command()
     @discord.option(
