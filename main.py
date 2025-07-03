@@ -46,12 +46,18 @@ if "DISCORD_TOKEN" not in environ or not environ.get("DISCORD_TOKEN") or environ
 
 from google import genai
 
-# Bot class
 class InitBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         self._lock_socket_instance(45769)
         super().__init__(*args, **kwargs)
 
+        # 非同期初期化用のプレースホルダー
+        self._wavelink = None
+        self._aiohttp_main_client_session = None
+        self._gemini_api_client = None
+
+    async def setup_hook(self):
+        # tempディレクトリの準備
         temp_dir = environ.get("TEMP_DIR", "temp")
         environ["TEMP_DIR"] = temp_dir
         temp_path = Path(temp_dir)
@@ -59,20 +65,15 @@ class InitBot(commands.Bot):
         for file in temp_path.iterdir():
             file.unlink()
 
-        self._wavelink = None
+        # wavelinkモジュールの読み込み（任意）
         try:
             self._wavelink = importlib.import_module("wavelink")
         except ModuleNotFoundError as e:
             logging.warning("Playback support is disabled: %s", e)
 
-        # ✅ 最新SDK形式で初期化
-        self._gemini_api_client = genai.Client(
-			api_key=environ["GEMINI_API_KEY"]
-		)
-
-         ✅ 非同期初期化ここに移動
-		self._aiohttp_main_client_session = aiohttp.ClientSession()
-		self._gemini_api_client = genai.Client(api_key=environ["GEMINI_API_KEY"])
+        # ✅ 非同期で初期化するリソース
+        self._aiohttp_main_client_session = aiohttp.ClientSession()
+        self._gemini_api_client = genai.Client(api_key=environ["GEMINI_API_KEY"])
 
     def _lock_socket_instance(self, port):
         try:
@@ -84,11 +85,14 @@ class InitBot(commands.Bot):
             raise e
 
     async def close(self):
-        await self._aiohttp_main_client_session.close()
+        if self._aiohttp_main_client_session:
+            await self._aiohttp_main_client_session.close()
+
         temp_path = Path(environ.get("TEMP_DIR", "temp"))
         if temp_path.exists():
             for file in temp_path.iterdir():
                 await aiofiles.os.remove(file)
+
         self._socket.close()
         await super().close()
 
