@@ -1,5 +1,6 @@
 from discord.ext import bridge, commands
 from google import genai
+from google.genai import GenerativeModel
 from inspect import cleandoc
 from os import chdir, mkdir, environ
 from pathlib import Path
@@ -61,10 +62,10 @@ class InitBot(bridge.Bot):
             logging.warning("Playback support is disabled: %s", e)
 
         # ✅ 新SDK形式に修正済み
-        genai.configure(api_key=environ.get("GEMINI_API_KEY"))
-        self._gemini_api_client = genai.Client()
-
-        self._aiohttp_main_client_session = aiohttp.ClientSession(loop=self.loop)
+        self._gemini_api_client = GenerativeModel(
+			model_name="gemini-pro",
+			api_key=environ.get("GEMINI_API_KEY")
+		)
 
     def _lock_socket_instance(self, port):
         try:
