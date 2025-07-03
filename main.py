@@ -42,6 +42,10 @@ if "DISCORD_TOKEN" not in environ or not environ.get("DISCORD_TOKEN") or environ
     raise Exception("Please insert a valid Discord bot token")
 
 
+# main.py
+
+from google import genai
+
 # Bot class
 class InitBot(commands.Bot):
     def __init__(self, *args, **kwargs):
@@ -61,12 +65,10 @@ class InitBot(commands.Bot):
         except ModuleNotFoundError as e:
             logging.warning("Playback support is disabled: %s", e)
 
-        # ✅ 1. APIキーの設定（必須）
-        genai.configure(api_key=environ.get("GEMINI_API_KEY"))
-
-        # ✅ 2. モデルの初期化
+        # ✅ 最新SDK形式で初期化
         self._gemini_api_client = genai.GenerativeModel(
-            model_name="gemini-pro"
+            model_name="gemini-pro",
+            api_key=environ.get("GEMINI_API_KEY")
         )
 
         self._aiohttp_main_client_session = aiohttp.ClientSession(loop=self.loop)
