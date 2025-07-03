@@ -70,7 +70,9 @@ class InitBot(commands.Bot):
 			api_key=environ["GEMINI_API_KEY"]
 		)
 
-        self._aiohttp_main_client_session = aiohttp.ClientSession()
+         ✅ 非同期初期化ここに移動
+		self._aiohttp_main_client_session = aiohttp.ClientSession()
+		self._gemini_api_client = genai.Client(api_key=environ["GEMINI_API_KEY"])
 
     def _lock_socket_instance(self, port):
         try:
