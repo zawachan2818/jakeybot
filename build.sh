@@ -13,7 +13,7 @@ pip install PyYAML
 
 pip install pymongo
 
-pip install google-generativeai==0.8.5
+pip install google-genai>=1.3.0
 
 pip install motor
 
