@@ -60,11 +60,9 @@ class InitBot(bridge.Bot):
         except ModuleNotFoundError as e:
             logging.warning("Playback support is disabled: %s", e)
 
-        # ✅ 新SDK方式で初期化（api_keyは直接渡す）
-        self._gemini_api_client = genai.GenerativeModel(
-            model_name="gemini-pro",
-            api_key=environ.get("GEMINI_API_KEY")
-        )
+        # ✅ 新SDK形式に修正済み
+        genai.configure(api_key=environ.get("GEMINI_API_KEY"))
+        self._gemini_api_client = genai.Client()
 
         self._aiohttp_main_client_session = aiohttp.ClientSession(loop=self.loop)
 
