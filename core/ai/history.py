@@ -1,13 +1,13 @@
 from core.exceptions import HistoryDatabaseError
 from os import environ
 from pymongo import ReturnDocument
-import discord as typehint_Discord
+from discord.ext import commands  # ← 修正
 import logging
 import motor.motor_asyncio
 
 # A class that is responsible for managing and manipulating the chat history
 class History:
-    def __init__(self, bot: typehint_Discord.Bot, db_conn: motor.motor_asyncio.AsyncIOMotorClient = None):
+    def __init__(self, bot: commands.Bot, db_conn: motor.motor_asyncio.AsyncIOMotorClient = None):  # ← 修正
         self._db_conn = db_conn
 
         if db_conn is None:
@@ -26,8 +26,6 @@ class History:
         logging.info("Created index for guild_id")
 
     async def _ensure_document(self, guild_id: int, model: str = "gemini::gemini-2.0-flash-001", tool_use: str = None):
-        """Ensures a document exists for the given guild_id, creates one if it doesn't exist.
-        Returns the current document."""
         if guild_id is None or not isinstance(guild_id, int):
             raise TypeError("guild_id is required and must be an integer")
 
@@ -44,7 +42,6 @@ class History:
         else:
             default_openrouter_model = None
 
-        # Use find_one_and_update with upsert to return the document after update.
         _document = await self._collection.find_one_and_update(
             {"guild_id": guild_id},
             {"$set": {
@@ -64,7 +61,6 @@ class History:
             
         _document = await self._ensure_document(guild_id)
 
-        # Check if model_provider_{model_provider} exists in the document
         if f"chat_thread_{model_provider}" not in _document:
             await self._collection.update_one({"guild_id": guild_id}, {
                 "$set": {f"chat_thread_{model_provider}": None}
@@ -133,7 +129,6 @@ class History:
             logging.error("Error getting default model: %s", e)
             raise HistoryDatabaseError("Error getting default model")
         
-    # Directly set custom keys and values to the document
     async def set_key(self, guild_id: int, key: str, value) -> None:
         if guild_id is None or not isinstance(guild_id, int):
             raise TypeError("guild_id is required and must be an integer")
@@ -149,7 +144,6 @@ class History:
             logging.error("Error setting keys: %s", e)
             raise HistoryDatabaseError(f"Error setting keys: {key}")
         
-    # Directly get custom keys and values from the document
     async def get_key(self, guild_id: int, key: str):
         if guild_id is None or not isinstance(guild_id, int):
             raise TypeError("guild_id is required and must be an integer")
@@ -163,4 +157,3 @@ class History:
         except Exception as e:
             logging.error("Error getting key: %s", e)
             raise HistoryDatabaseError(f"Error getting key: {key}")
-
