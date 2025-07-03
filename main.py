@@ -66,10 +66,9 @@ class InitBot(commands.Bot):
             logging.warning("Playback support is disabled: %s", e)
 
         # ✅ 最新SDK形式で初期化
-        self._gemini_api_client = genai.GenerativeModel(
-            model_name="gemini-pro",
-            api_key=environ.get("GEMINI_API_KEY")
-        )
+        self._gemini_api_client = genai.Client(
+			api_key=environ["GEMINI_API_KEY"]
+		)
 
         self._aiohttp_main_client_session = aiohttp.ClientSession(loop=self.loop)
 
