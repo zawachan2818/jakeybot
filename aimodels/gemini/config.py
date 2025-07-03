@@ -1,5 +1,14 @@
 from core.exceptions import CustomErrorMessage
-from google.genai.types import Content, Part, GenerateContentConfig, HarmCategory, HarmBlockThreshold
+from google.genai.types import (
+    Content,
+    Part,
+    GenerateContentConfig,
+    HarmCategory,
+    HarmBlockThreshold,
+    Tool,
+    ToolCodeExecution,
+    FunctionDeclaration
+)
 import importlib
 import logging
 
@@ -16,29 +25,28 @@ class ModelParams:
             "top_k": 40,
             "safety_settings": [
                 {
-                    "category": "HARM_CATEGORY_HARASSMENT",
-                    "threshold": "BLOCK_ONLY_HIGH"
+                    "category": HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    "threshold": HarmBlockThreshold.BLOCK_ONLY_HIGH
                 },
                 {
-                    "category": "HARM_CATEGORY_HATE_SPEECH",
-                    "threshold": "BLOCK_ONLY_HIGH"
+                    "category": HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    "threshold": HarmBlockThreshold.BLOCK_ONLY_HIGH
                 },
                 {
-                    "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                    "threshold": "BLOCK_ONLY_HIGH"
+                    "category": HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                    "threshold": HarmBlockThreshold.BLOCK_ONLY_HIGH
                 },
                 {
-                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                    "threshold": "BLOCK_ONLY_HIGH"
+                    "category": HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    "threshold": HarmBlockThreshold.BLOCK_ONLY_HIGH
                 }
             ]
         }
 
     # Methods
-    # internal function to fetch tool
     async def _fetch_tool(self, db_conn) -> dict:
-        # Tools
         _tool_selection_name = await db_conn.get_tool_config(guild_id=self._guild_id)
+
         try:
             if _tool_selection_name is None:
                 _Tool = None
@@ -50,24 +58,26 @@ class ModelParams:
                 )
         except ModuleNotFoundError as e:
             logging.error("I cannot import the tool because the module is not found: %s", e)
-            raise CustomErrorMessage("⚠️ The feature you've chosen is not available at the moment, please choose another tool using `/feature` command or try again later")
+            raise CustomErrorMessage(
+                "⚠️ The feature you've chosen is not available at the moment. "
+                "Please choose another tool using `/feature` command or try again later."
+            )
 
-        # Check if tool is code execution
         if _Tool:
             if "gemini-2.0-flash-thinking" in self._model_name:
-                await self._discord_method_send("> ⚠️ The Gemini 2.0 Flash Thinking doesn't support tools, please switch to another Gemini model to use it.")
+                await self._discord_method_send(
+                    "> ⚠️ The Gemini 2.0 Flash Thinking doesn't support tools. "
+                    "Please switch to another Gemini model to use it."
+                )
                 _tool_schema = None
             else:
                 if _tool_selection_name == "code_execution":
-                    _tool_schema = [types.Tool(code_execution=types.ToolCodeExecution())]
+                    _tool_schema = [Tool(code_execution=ToolCodeExecution())]
                 else:
-                    # Check if the tool schema is a list or not
-                    # Since a list of tools could be a collection of tools, sometimes it's just a single tool
-                    # But depends on the tool implementation
-                    if type(_Tool.tool_schema) == list:
-                        _tool_schema = [types.Tool(function_declarations=_Tool.tool_schema)]
+                    if isinstance(_Tool.tool_schema, list):
+                        _tool_schema = [Tool(function_declarations=_Tool.tool_schema)]
                     else:
-                        _tool_schema = [types.Tool(function_declarations=[_Tool.tool_schema])]
+                        _tool_schema = [Tool(function_declarations=[_Tool.tool_schema])]
         else:
             _tool_schema = None
 
