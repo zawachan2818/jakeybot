@@ -1,6 +1,5 @@
 from discord.ext import bridge, commands
 from google import genai
-from google.genai import GenerativeModel
 from inspect import cleandoc
 from os import chdir, mkdir, environ
 from pathlib import Path
@@ -42,6 +41,7 @@ logging.basicConfig(
 if "DISCORD_TOKEN" not in environ or not environ.get("DISCORD_TOKEN") or environ.get("DISCORD_TOKEN") == "INSERT_DISCORD_TOKEN":
     raise Exception("Please insert a valid Discord bot token")
 
+
 # Bot class
 class InitBot(bridge.Bot):
     def __init__(self, *args, **kwargs):
@@ -61,11 +61,10 @@ class InitBot(bridge.Bot):
         except ModuleNotFoundError as e:
             logging.warning("Playback support is disabled: %s", e)
 
-        # ✅ 新SDK形式に修正済み
-        self._gemini_api_client = GenerativeModel(
-			model_name="gemini-pro",
-			api_key=environ.get("GEMINI_API_KEY")
-		)
+        # ✅ 正しい新SDK形式
+        self._gemini_api_client = genai.GenerativeModel(
+            model_name="gemini-pro"
+        )
 
     def _lock_socket_instance(self, port):
         try:
