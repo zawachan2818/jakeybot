@@ -1,9 +1,8 @@
 from .config import ModelParams
 from core.ai.core import Utils
 from core.exceptions import CustomErrorMessage
-import google.generativeai as genai
-from google.generativeai.types.content_types import Content, Part
-from google.generativeai.types import GenerationConfig
+from google import genai
+from google.genai.types import Content, Part, GenerateContentConfig, HarmCategory, HarmBlockThreshold
 from google.api_core.exceptions import GoogleAPIError
 from os import environ
 from pathlib import Path
