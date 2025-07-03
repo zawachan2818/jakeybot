@@ -35,8 +35,11 @@ class GeminiUtils(commands.Cog):
         prompt = f"Describe the user's avatar at this URL: {avatar_url}"
 
         try:
-            result = await Completions.text(prompt)
+            # Completionsインスタンスを生成し、promptを渡してcompletionを実行
+            completions = Completions(discord_ctx=ctx, discord_bot=self.bot)
+            result = await completions.completion(prompt=prompt)
             await ctx.respond(result, ephemeral=True)
+
         except PollOffTopicRefusal as refusal:
             await ctx.respond(str(refusal), ephemeral=True)
         except CustomErrorMessage as err:
