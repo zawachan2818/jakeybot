@@ -41,17 +41,12 @@ logging.basicConfig(
 if "DISCORD_TOKEN" not in environ or not environ.get("DISCORD_TOKEN") or environ.get("DISCORD_TOKEN") == "INSERT_DISCORD_TOKEN":
     raise Exception("Please insert a valid Discord bot token")
 
-
-# main.py
-
-from google import genai
-
+# Bot class
 class InitBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         self._lock_socket_instance(45769)
         super().__init__(*args, **kwargs)
 
-        # 非同期初期化用のプレースホルダー
         self._wavelink = None
         self._aiohttp_main_client_session = None
         self._gemini_api_client = None
@@ -71,9 +66,24 @@ class InitBot(commands.Bot):
         except ModuleNotFoundError as e:
             logging.warning("Playback support is disabled: %s", e)
 
-        # ✅ 非同期で初期化するリソース
+        # 非同期リソースの初期化
         self._aiohttp_main_client_session = aiohttp.ClientSession()
         self._gemini_api_client = genai.Client(api_key=environ["GEMINI_API_KEY"])
+
+        # cogsの読み込み
+        try:
+            with open('commands.yaml', 'r') as file:
+                cog_commands = yaml.safe_load(file)
+                for command in cog_commands:
+                    if "voice" in command and not self._wavelink:
+                        logging.warning("Skipping %s... Playback support is disabled", command)
+                        continue
+                    try:
+                        await self.load_extension(f'cogs.{command}')
+                    except Exception as e:
+                        logging.error("cogs.%s failed to load, skipping... The following error of the cog: %s", command, e)
+        except Exception as e:
+            logging.error("Failed to load commands.yaml: %s", e)
 
     def _lock_socket_instance(self, port):
         try:
@@ -103,18 +113,15 @@ async def on_ready():
     mongo_uri = environ.get("MONGO_DB_URL")
     bot._db_conn = motor.motor_asyncio.AsyncIOMotorClient(mongo_uri)
 
-    # MongoDB 接続確認
     try:
         await bot._db_conn.server_info()
         logging.info("✅ MongoDB connected successfully")
     except Exception as e:
         logging.error("❌ MongoDB connection failed: %s", e)
 
-    # 必要なら History の初期化（あとで使う場合）
     from core.ai.history import History
     bot._history = History(bot=bot, db_conn=bot._db_conn)
 
-    # この下に元々あった処理を続けて書く（wavelink処理など）
     await bot.change_presence(activity=discord.Game("Preparing the bot for its first use..."))
 
     if bot._wavelink is not None:
@@ -151,21 +158,6 @@ async def on_message(message: discord.Message):
 
             If you have any questions, you can visit my [documentation or contact me here](https://zavocc.github.io)
         """))
-
-# Load cogs from commands.yaml
-try:
-    with open('commands.yaml', 'r') as file:
-        cog_commands = yaml.safe_load(file)
-        for command in cog_commands:
-            if "voice" in command and not bot._wavelink:
-                logging.warning("Skipping %s... Playback support is disabled", command)
-                continue
-            try:
-                bot.load_extension(f'cogs.{command}')
-            except Exception as e:
-                logging.error("cogs.%s failed to load, skipping... The following error of the cog: %s", command, e)
-except Exception as e:
-    logging.error("Failed to load commands.yaml: %s", e)
 
 # Custom HelpCommand
 class CustomHelp(commands.MinimalHelpCommand):
