@@ -1,8 +1,8 @@
 from .config import ModelParams
 from core.ai.core import Utils
 from core.exceptions import CustomErrorMessage
-import google.generativeai as genai
-from google.generativeai import types
+from google import genai
+from google.genai.types import Content, Part, GenerateContentConfig, HarmCategory, HarmBlockThreshold
 import aiohttp
 import discord
 
