@@ -4,6 +4,7 @@ from core.exceptions import CustomErrorMessage
 from google import genai
 from google.genai.types import Content, Part, GenerateContentConfig, HarmCategory, HarmBlockThreshold
 from google.api_core.exceptions import GoogleAPIError
+from google.api_core import exceptions as errors
 from os import environ
 from pathlib import Path
 import aiohttp
