@@ -52,5 +52,5 @@ class Misc(commands.Cog):
         else:
             logging.error("An error has occurred while executing mimic command, reason: ", exc_info=True)
 
-def setup(bot):
-    bot.add_cog(Misc(bot))
+	async def setup(bot):
+        await bot.add_cog(Misc(bot))
