@@ -9,48 +9,29 @@ class Misc(commands.Cog):
         self.bot = bot
         self.author = environ.get("BOT_NAME", "Jakey Bot")
 
-    @commands.slash_command(
-        # ↓ InteractionContextType を削除！
-        # contexts={discord.InteractionContextType.guild},
-        # integration_types={discord.IntegrationType.guild_install}
-    )
+    @commands.slash_command()
     async def mimic(self, ctx, user: Member, message_body: str):
-        """Mimic as user!"""
         await ctx.response.defer(ephemeral=True)
 
-        if isinstance(user, int):
-            user = await self.bot.fetch_user(user)    
         avatar_url = user.avatar.url if user.avatar else "https://cdn.discordapp.com/embed/avatars/0.png"
-
-        if ctx.guild:
-            _xuser_display_name = await ctx.guild.fetch_member(user.id)
-            user_name = f"{_xuser_display_name.display_name}"
-        else:
-            _xuser_display_name = await self.bot.fetch_user(user.id)
-            user_name = f"{_xuser_display_name.display_name}"
+        user_name = user.display_name
 
         webhook = await ctx.channel.create_webhook(name=f"Mimic command by {self.author}")
 
         if not message_body:
             await ctx.respond("⚠️ Please specify a message to mimic!")
             return
+
         await webhook.send(content=message_body, username=user_name, avatar_url=avatar_url)
         await webhook.delete()
-        
         await ctx.respond("✅ Done!")
 
     @mimic.error
     async def on_command_error(self, ctx: commands.Context, error: DiscordException):
         if isinstance(error, commands.MissingRequiredArgument) or isinstance(error, commands.BadUnionArgument):
-            await ctx.respond("⚠️ Please specify a valid discord user (or user id) and message to mimic!\n**Syntax:** `$mimic <user/user id> <message>`")
-        elif isinstance(error, commands.CommandInvokeError) or isinstance(error, commands.MissingPermissions):
-            await ctx.respond("❌ Sorry, webhooks are not enabled in this channel. Please enable webhooks in this channel to use this command.")
-        elif isinstance(error, commands.NoPrivateMessage):
-            await ctx.respond("❌ Sorry, this feature is not supported in DMs. Please use this command inside the guild.")
-        elif isinstance(error, commands.ApplicationCommandInvokeError):
-            await ctx.respond("⚠️ Please input a member")
+            await ctx.respond("⚠️ Specify a valid user and message!")
         else:
-            logging.error("An error has occurred while executing mimic command, reason: ", exc_info=True)
+            logging.error("Error in /mimic", exc_info=True)
 
-	async def setup(bot):
-        await bot.add_cog(Misc(bot))
+async def setup(bot):
+    await bot.add_cog(Misc(bot))
