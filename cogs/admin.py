@@ -23,37 +23,30 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def admin_execute(self, ctx, *shell_command):
         """Execute a shell command inline, useful for troubleshooting or running quick maintenance task (owner only)"""
-        # Check for arguments
         if not shell_command or len(shell_command) == 0:
             await ctx.respond("You need to provide a shell command to execute")
             return
 
-        # Used to echo the command ran to the bot, as it errors? when this is directly used in f-string
         pretty_shell_command = " ".join(shell_command)
-
-        # For now, shell output is disabled as it is having trouble with parsing "/" character as arguments, thus this is a security risk
-        # For PIPING, we just typically use $execute bash -c "command | pipe"
         output = None
+
         try:
-            output = subprocess.run(shell_command, shell = False,capture_output = True)
+            output = subprocess.run(shell_command, shell=False, capture_output=True)
         except FileNotFoundError:
             await ctx.respond(f"Cannot execute `{pretty_shell_command}`, no such file or directory.")
-        
-        # Check if we should send the output to file 
+            return
+
         _xfilepath = f"{environ.get('TEMP_DIR')}/output{random.randint(3928,10029)}.txt"
         if output.stdout:
-            # If the output exceeds 2000 characters, send it as a file
-            if len(output.stdout.decode('utf-8')) > 2000:
+            output_text = output.stdout.decode('utf-8')
+            if len(output_text) > 2000:
                 async with aiofiles.open(_xfilepath, "w+") as f:
-                    await f.write(output.stdout.decode('utf-8'))
-
+                    await f.write(output_text)
                 await ctx.respond(f"I executed `{pretty_shell_command}` and got:", file=discord.File(_xfilepath, "output.txt"))
-
-                # Delete the file
                 await aiofiles.os.remove(_xfilepath)
             else:
                 await ctx.respond(f"I executed `{pretty_shell_command}` and got:")
-                await ctx.send(f"```{output.stdout.decode('utf-8')}```")
+                await ctx.send(f"```{output_text}```")
         else:
             await ctx.respond(f"I executed `{pretty_shell_command}` and got no output")
 
@@ -65,5 +58,6 @@ class Admin(commands.Cog):
         else:
             raise error
 
-def setup(bot):
-    bot.add_cog(Admin(bot))
+# 🔧 修正ポイント：async def + await
+async def setup(bot):
+    await bot.add_cog(Admin(bot))
