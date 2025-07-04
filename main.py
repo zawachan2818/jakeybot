@@ -14,6 +14,10 @@ import socket
 import yaml
 import threading
 import motor.motor_asyncio
+import subprocess
+
+print("🔍 Installed packages on boot:")
+print(subprocess.run(["pip", "list"], capture_output=True, text=True).stdout)
 
 # discord version info
 print("discord version:", discord.__version__)
