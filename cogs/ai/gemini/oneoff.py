@@ -65,4 +65,4 @@ class GeminiQuickChat(commands.Cog):
         logging.error("An error has occurred while generating an answer:", exc_info=True)
 
 def setup(bot):
-    bot.add_cog(GeminiQuickChat(bot))
+    await bot.add_cog(GeminiQuickChat(bot))
