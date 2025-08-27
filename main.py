@@ -4,6 +4,7 @@ from inspect import cleandoc
 from os import chdir, mkdir, environ
 from pathlib import Path
 import aiohttp
+from aiohttp import web # これも追加
 import aiofiles.os
 import discord
 import dotenv
@@ -15,6 +16,7 @@ import yaml
 import threading
 import motor.motor_asyncio
 import subprocess
+import asyncio # これも追加
 
 print("🔍 Installed packages on boot:")
 print(subprocess.run(["pip", "list"], capture_output=True, text=True).stdout)
@@ -185,16 +187,26 @@ class CustomHelp(commands.MinimalHelpCommand):
 
 bot.help_command = CustomHelp()
 
-# Run bot
-bot.run(environ.get('DISCORD_TOKEN'))
+async def run_bot():
+    """Botの実行"""
+    await bot.start(environ.get('DISCORD_TOKEN'))
 
-# Dummy port listener (for Render)
-def dummy_server():
-    s = socket.socket()
-    s.bind(('0.0.0.0', 10000))
-    s.listen(1)
-    while True:
-        conn, addr = s.accept()
-        conn.close()
+async def run_server():
+    """Renderのヘルスチェック用Webサーバー"""
+    app = aiohttp.web.Application()
+    app.router.add_get('/', lambda r: aiohttp.web.Response(text='Bot is running!'))
+    runner = aiohttp.web.AppRunner(app)
+    await runner.setup()
+    site = aiohttp.web.TCPSite(runner, '0.0.0.0', environ.get('PORT', 10000))
+    await site.start()
+    logging.info(f"Render health check server started on port {environ.get('PORT', 10000)}.")
 
-threading.Thread(target=dummy_server, daemon=True).start()
+async def main():
+    """両方のタスクを同時に実行する"""
+    await asyncio.gather(
+        run_bot(),
+        run_server()
+    )
+
+if __name__ == "__main__":
+    asyncio.run(main())
